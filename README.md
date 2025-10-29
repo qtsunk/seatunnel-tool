@@ -58,4 +58,4 @@ go build -v -a -trimpath -ldflags "-s -w" -o seatunnel-tool.exe
 
 ## 许可证
 
-本项目仅用于演示与内部调试，未附带额外开源许可证，请在遵循 Apache SeaTunnel 项目许可证的前提下使用。***
+本项目仅用于演示与内部调试，未附带额外开源许可证，请在遵循 Apache SeaTunnel 项目许可证的前提下使用。
