@@ -1,0 +1,1603 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>SeaTunnel REST API 本地控制台</title>
+<link rel="icon" type="image/png" href="https://seatunnel.apache.org/image/logo.png">
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  /* ===== 全局基础样式 ===== */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f4f6f9;
+    color: #1f2d3d;
+    line-height: 1.5;
+    scrollbar-width: thin;
+    scrollbar-color: #a5c8f4 transparent;
+  }
+  /* 自定义滚动条（WebKit 内核） */
+  body::-webkit-scrollbar,
+  .result-body::-webkit-scrollbar {
+    width: 8px;
+  }
+  body::-webkit-scrollbar-thumb,
+  .result-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #aecdf8 0%, #1f8ceb 100%);
+    border-radius: 999px;
+  }
+  body::-webkit-scrollbar-track,
+  .result-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  h1 {
+    margin-top: 0;
+    font-size: 28px;
+  }
+  h2 {
+    font-size: 22px;
+    border-left: 4px solid #1f8ceb;
+    padding-left: 12px;
+  }
+  h3 {
+    font-size: 18px;
+    margin: 16px 0 8px;
+  }
+  p {
+    margin: 8px 0;
+  }
+  /* ===== 面板与内容区块 ===== */
+  .panel {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
+    margin-bottom: 28px;
+  }
+  .panel details {
+    border: 1px solid #d6e4ff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    background: #f9fbff;
+  }
+  .panel details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #0f5fd6;
+  }
+  .panel details[open] {
+    background: #eef5ff;
+  }
+  form {
+    margin-top: 12px;
+  }
+  /* ===== 表单元素样式 ===== */
+  .field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .field label {
+    position: absolute;
+    top: 0;
+    left: 14px;
+    transform: translateY(-50%);
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5b6b83;
+    background: #fff;
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+  .field:focus-within label {
+    color: #1f8ceb;
+  }
+  input[type="text"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 14px 14px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  input[type="text"],
+  input[type="url"],
+  input[type="number"],
+  select {
+    height: 46px;
+  }
+  /* 自定义下拉框视觉效果 */
+  select {
+    appearance: none;
+    padding-right: 42px;
+    color: #1f2d3d;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%231f8ceb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px 8px;
+    cursor: pointer;
+  }
+  select:hover {
+    border-color: #63a8f8;
+  }
+  select:focus {
+    border-color: #1f8ceb;
+    box-shadow: 0 0 0 3px rgba(31, 140, 235, 0.12);
+  }
+  select:disabled {
+    background-color: #f4f7fb;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+  select option {
+    color: #1f2d3d;
+    background: #ffffff;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+  textarea {
+    min-height: 360px;
+    padding-top: 26px;
+    font-family: Consolas, "Courier New", monospace;
+    resize: vertical;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #1f8ceb;
+    box-shadow: 0 0 0 3px rgba(31, 140, 235, 0.12);
+  }
+  /* 自定义上传控件外观 */
+  input[type="file"] {
+    padding: 14px 12px;
+    border: 1px dashed #9fb9d9;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  input[type="file"]:hover {
+    border-color: #1f8ceb;
+    background: rgba(31, 140, 235, 0.04);
+  }
+  input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #1f8ceb 0%, #3aa3ff 100%);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  input[type="file"]::file-selector-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(31, 140, 235, 0.25);
+  }
+  .field.checkbox {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .field.checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+  .field.checkbox label {
+    position: static;
+    transform: none;
+    padding: 0;
+    background: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2d3d;
+    pointer-events: auto;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: flex-start;
+    align-self: center;
+    height: 36px;
+    padding: 0 18px;
+    background: #1f8ceb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    line-height: 1;
+  }
+  button:hover {
+    background: #0d6cd6;
+  }
+  button:disabled {
+    background: #9fb9d9;
+    cursor: not-allowed;
+  }
+  .data-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  }
+  .data-form .fields {
+    display: grid;
+    gap: 12px;
+    align-items: center;
+  }
+  .data-form .field.full-span {
+    grid-column: 1 / -1;
+  }
+  .data-form.two-columns .fields {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .data-form.three-columns .fields {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .data-form.single-column .fields {
+    grid-template-columns: 1fr;
+  }
+  .data-form .actions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .data-form .actions .status {
+    margin-left: 16px;
+    font-size: 13px;
+    color: #1f8ceb;
+  }
+  .data-form .actions .status:empty {
+    display: none;
+  }
+  /* ===== 请求结果展示 ===== */
+  .result {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fbff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .result-meta .meta-item {
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    color: #5b6b83;
+  }
+  .result-meta .meta-item code {
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #eef5ff;
+    color: #1f2d3d;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+  }
+  .result-body {
+    margin: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: #0b1a33;
+    color: #e6edf7;
+    max-height: 360px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 13px;
+  }
+  .result.empty .result-body {
+    background: #f2f6ff;
+    color: #4b5563;
+  }
+  .result.error {
+    border-color: #f87171;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+  }
+  .result.error .result-body {
+    background: #331010;
+    color: #ffd5d9;
+  }
+  .hint-text {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+  }
+  .footer-link {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .footer-link a {
+    color: #1f8ceb;
+    text-decoration: none;
+  }
+  .footer-link a:hover {
+    text-decoration: underline;
+  }
+  .tip {
+    font-size: 13px;
+    color: #4e5d78;
+  }
+  .note {
+    font-size: 13px;
+    color: #3b465c;
+    background: #f1f5ff;
+    padding: 8px 0;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <h1>SeaTunnel REST API 本地控制台</h1>
+    <p>一个基于 Go + HTML 嵌入 开发的轻量级 SeaTunnel RESTful API V2 管理工具，提供作业管理、集群状态监控等常用操作的可视化封装，帮助用户快速维护 SeaTunnel 集群。</p>
+    <p class="tip">提示：若服务启用了 <code>context-path</code>，请在基础地址中一并填写，例如 <code>http://localhost:8080/seatunnel</code>，基于 <code>https://seatunnel.apache.org/docs/2.3.12/seatunnel-engine/rest-api-v2</code> 开发。</p>
+    <form id="baseConfigForm" class="data-form two-columns">
+      <div class="fields">
+        <div class="field">
+          <label for="baseUrlInput">基础地址</label>
+          <input id="baseUrlInput" type="url" placeholder="例如：http://localhost:8080" required>
+        </div>
+        <div class="field">
+          <label for="timeoutInput">请求超时时间（毫秒）</label>
+          <input id="timeoutInput" type="number" min="0" step="100" value="0" placeholder="0 表示不设置超时">
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit">保存基础配置</button>
+        <span id="baseUrlStatus" class="status"></span>
+      </div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>集群与作业查询</h2>
+    <details open>
+      <summary>集群概览（GET /overview）</summary>
+      <form id="overviewForm" data-result="overviewResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="overviewTags">标签过滤（可选）</label>
+            <input id="overviewTags" type="text" placeholder="示例：tag1=value1&amp;tag2=value2">
+          </div>
+          <div class="field">
+            <label for="overviewExtra">附加查询串（可选）</label>
+            <input id="overviewExtra" type="text" placeholder="直接追加到查询串，例如：limit=5">
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">查询集群概览</button>
+        </div>
+      </form>
+      <div class="result empty" id="overviewResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>运行中作业列表（GET /running-jobs）</summary>
+      <form id="runningJobsForm" data-result="runningJobsResult" class="data-form single-column">
+        <div class="actions">
+          <button type="submit">查询运行中作业</button>
+        </div>
+      </form>
+      <div class="result empty" id="runningJobsResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>作业详情（GET /job-info/:jobId）</summary>
+      <form id="jobInfoForm" data-result="jobInfoResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="jobInfoId">作业 ID</label>
+            <input id="jobInfoId" type="text" required placeholder="请输入准确的作业 ID">
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">获取作业详情</button>
+        </div>
+      </form>
+      <div class="result empty" id="jobInfoResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>已完成作业（GET /finished-jobs/:state）</summary>
+      <form id="finishedJobsForm" data-result="finishedJobsResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="finishedState">作业状态过滤（可选）</label>
+            <select id="finishedState">
+              <option value="">全部</option>
+              <option value="FINISHED">FINISHED</option>
+              <option value="CANCELED">CANCELED</option>
+              <option value="FAILED">FAILED</option>
+              <option value="SAVEPOINT_DONE">SAVEPOINT_DONE</option>
+              <option value="UNKNOWABLE">UNKNOWABLE</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">查询已完成作业</button>
+        </div>
+      </form>
+      <div class="result empty" id="finishedJobsResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>系统资源监控（GET /system-monitoring-information）</summary>
+      <form id="systemInfoForm" data-result="systemInfoResult" class="data-form single-column">
+        <div class="actions">
+          <button type="submit">查询系统监控信息</button>
+        </div>
+      </form>
+      <div class="result empty" id="systemInfoResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>兼容接口：运行中作业详情（GET /running-job/:jobId，已弃用）</summary>
+      <div class="note">该接口已在官方文档中标记为弃用，仅在旧版本兼容场景下使用。</div>
+      <form id="deprecatedJobForm" data-result="deprecatedJobResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="deprecatedJobId">作业 ID</label>
+            <input id="deprecatedJobId" type="text" required placeholder="请输入作业 ID">
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">调用兼容接口</button>
+        </div>
+      </form>
+      <div class="result empty" id="deprecatedJobResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+  </div>
+  <div class="panel">
+    <h2>作业提交与管理</h2>
+
+    <details>
+      <summary>提交作业（POST /submit-job）</summary>
+      <div class="note">支持 JSON、HOCON 与 SQL 三种配置格式。默认按 JSON 解析。</div>
+      <form id="submitJobForm" data-result="submitJobResult" class="data-form three-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="submitJobId">作业 ID（可选）</label>
+            <input id="submitJobId" type="text" placeholder="不填则由服务端生成">
+          </div>
+          <div class="field">
+            <label for="submitJobName">作业名称（可选）</label>
+            <input id="submitJobName" type="text" placeholder="可指定自定义作业名称">
+          </div>
+          <div class="field">
+            <label for="submitJobSavepoint">以保存点启动（可选）</label>
+            <select id="submitJobSavepoint">
+              <option value="">保持默认</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="submitJobFormat">配置格式</label>
+            <select id="submitJobFormat">
+              <option value="json">json</option>
+              <option value="hocon">hocon</option>
+              <option value="sql">sql</option>
+            </select>
+          </div>
+          <div class="field full-span">
+            <label for="submitJobConfig">配置内容</label>
+            <textarea id="submitJobConfig" placeholder="请输入作业配置"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">提交作业</button>
+        </div>
+      </form>
+      <div class="result empty" id="submitJobResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>上传配置文件提交作业（POST /submit-job/upload）</summary>
+      <form id="uploadJobForm" data-result="uploadJobResult" enctype="multipart/form-data" class="data-form three-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="uploadJobId">作业 ID（可选）</label>
+            <input id="uploadJobId" type="text">
+          </div>
+          <div class="field">
+            <label for="uploadJobName">作业名称（可选）</label>
+            <input id="uploadJobName" type="text">
+          </div>
+          <div class="field">
+            <label for="uploadJobSavepoint">以保存点启动（可选）</label>
+            <select id="uploadJobSavepoint">
+              <option value="">保持默认</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+          <div class="field full-span">
+            <label for="uploadJobFile">配置文件</label>
+            <input id="uploadJobFile" type="file" accept=".json,.conf,.config,.sql" required>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">上传并提交</button>
+        </div>
+      </form>
+      <div class="result empty" id="uploadJobResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>批量提交作业（POST /submit-jobs）</summary>
+      <div class="note">请求体需为 JSON 数组，元素示例请参考官方文档。</div>
+      <form id="batchSubmitForm" data-result="batchSubmitResult" class="data-form single-column">
+        <div class="fields">
+          <div class="field full-span">
+            <label for="batchSubmitPayload">批量配置数组</label>
+            <textarea id="batchSubmitPayload" placeholder='例如：[{"params":{"jobName":"SeaTunnel-01"},"env":{...}}]'></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">批量提交</button>
+        </div>
+      </form>
+      <div class="result empty" id="batchSubmitResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>停止作业（POST /stop-job）</summary>
+      <form id="stopJobForm" data-result="stopJobResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="stopJobId">作业 ID</label>
+            <input id="stopJobId" type="text" required>
+          </div>
+          <div class="field checkbox">
+            <input id="stopJobSavepoint" type="checkbox">
+            <label for="stopJobSavepoint">停止前生成保存点</label>
+          </div>
+          <div class="field full-span">
+            <div class="hint-text">勾选后，请求体中的 <code>isStopWithSavePoint</code> 将被设置为 <code>true</code>，以便服务端在停止前生成保存点。</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">停止作业</button>
+        </div>
+      </form>
+      <div class="result empty" id="stopJobResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>批量停止作业（POST /stop-jobs）</summary>
+      <div class="note">请求体需为 JSON 数组，每一项包含 <code>jobId</code> 与 <code>isStopWithSavePoint</code> 字段。</div>
+      <form id="batchStopForm" data-result="batchStopResult" class="data-form single-column">
+        <div class="fields">
+          <div class="field full-span">
+            <label for="batchStopPayload">批量停止配置</label>
+            <textarea id="batchStopPayload" placeholder='例如：[{"jobId":123,"isStopWithSavePoint":false}]'></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">批量停止</button>
+        </div>
+      </form>
+      <div class="result empty" id="batchStopResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+  </div>
+  <div class="panel">
+    <h2>配置加密与节点标签</h2>
+
+    <details>
+      <summary>配置加密（POST /encrypt-config）</summary>
+      <form id="encryptForm" data-result="encryptResult" class="data-form single-column">
+        <div class="fields">
+          <div class="field full-span">
+            <label for="encryptPayload">原始配置（JSON）</label>
+            <textarea id="encryptPayload" placeholder="请粘贴需要加密的完整 JSON 配置"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">加密配置</button>
+        </div>
+      </form>
+      <div class="result empty" id="encryptResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>更新节点标签（POST /update-tags）</summary>
+      <div class="note">为空对象 <code>{}</code> 表示清空当前节点标签。</div>
+      <form id="updateTagsForm" data-result="updateTagsResult" class="data-form single-column">
+        <div class="fields">
+          <div class="field full-span">
+            <label for="updateTagsPayload">标签映射（JSON）</label>
+            <textarea id="updateTagsPayload" placeholder='例如：{"tag1":"dev","tag2":"blue"}'></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">更新标签</button>
+        </div>
+      </form>
+      <div class="result empty" id="updateTagsResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel">
+    <h2>日志与监控</h2>
+
+    <details>
+      <summary>集群日志（GET /logs、/logs/:jobId、/logs/日志文件）</summary>
+      <div class="note">可按需填写作业 ID 或具体日志文件名。若均为空则返回日志列表。支持返回 JSON 或 HTML。</div>
+      <form id="logsForm" data-result="logsResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="logsJobId">作业 ID（可选）</label>
+            <input id="logsJobId" type="text" placeholder="用于获取指定作业在所有节点的日志">
+          </div>
+          <div class="field">
+            <label for="logsFileName">日志文件名（可选）</label>
+            <input id="logsFileName" type="text" placeholder="例如：job-xxx.log">
+          </div>
+          <div class="field">
+            <label for="logsFormat">返回格式</label>
+            <select id="logsFormat">
+              <option value="">默认（HTML）</option>
+              <option value="html">html</option>
+              <option value="json">json</option>
+              <option value="text">text</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">查询日志</button>
+        </div>
+      </form>
+      <div class="result empty" id="logsResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>节点日志（GET /log、/log/日志文件）</summary>
+      <form id="nodeLogForm" data-result="nodeLogResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="nodeLogPath">日志文件名（可选）</label>
+            <input id="nodeLogPath" type="text" placeholder="为空时返回当前节点的日志列表">
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">查询节点日志</button>
+        </div>
+      </form>
+      <div class="result empty" id="nodeLogResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>指标数据（GET /metrics、GET /openmetrics）</summary>
+      <form id="metricsForm" data-result="metricsResult" class="data-form two-columns">
+        <div class="fields">
+          <div class="field">
+            <label for="metricsType">接口选择</label>
+            <select id="metricsType">
+              <option value="metrics">/metrics</option>
+              <option value="openmetrics">/openmetrics</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">查询指标</button>
+        </div>
+      </form>
+      <div class="result empty" id="metricsResult">
+        <div class="result-meta">
+          <div class="meta-item">
+            <span>目标地址</span>
+            <code data-meta="url">-</code>
+          </div>
+          <div class="meta-item">
+            <span>HTTP 状态</span>
+            <code data-meta="status">-</code>
+          </div>
+          <div class="meta-item">
+            <span>耗时</span>
+            <code data-meta="duration">-</code>
+          </div>
+        </div>
+        <pre class="result-body" data-meta="body">尚未发起请求。</pre>
+      </div>
+    </details>
+  </div>
+  <div class="footer-link">
+    <span>V20251029 | GitHub：</span><a href="https://github.com/qtsunk/seatunnel-tool" target="_blank" rel="noopener">https://github.com/qtsunk/seatunnel-tool</a>
+  </div>
+<script>
+(() => {
+    // ---- 全局状态：存储基础配置及元素引用 ----
+    const state = {
+      baseUrl: '',
+      timeout: 0
+    };
+
+  const selectors = {
+    baseInput: document.getElementById('baseUrlInput'),
+    timeoutInput: document.getElementById('timeoutInput'),
+    baseStatus: document.getElementById('baseUrlStatus'),
+    baseForm: document.getElementById('baseConfigForm')
+  };
+
+  const updateBaseStatus = (message, isError = false) => {
+    selectors.baseStatus.textContent = message;
+    selectors.baseStatus.style.color = isError ? '#d94a49' : '#1f8ceb';
+  };
+
+  const syncFormWithState = () => {
+    selectors.baseInput.value = state.baseUrl;
+    selectors.timeoutInput.value = state.timeout || 0;
+  };
+
+    // 确保用户已配置基础地址后再发起接口调用
+    const ensureConfigReady = () => {
+    if (!state.baseUrl) {
+      throw new Error('请先保存 SeaTunnel 基础地址。');
+    }
+  };
+
+  // 解析来自文本域/输入框的 JSON 字符串
+  const parseJsonInput = (text, allowEmpty = false) => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      if (allowEmpty) {
+        return {};
+      }
+      throw new Error('请输入 JSON 内容。');
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch (error) {
+      throw new Error('JSON 格式错误：' + error.message);
+    }
+  };
+
+  // 切换表单提交状态，避免重复提交
+  const toggleLoading = (form, isLoading) => {
+    const buttons = form.querySelectorAll('button[type="submit"]');
+    buttons.forEach(button => {
+      if (!button.dataset.originalLabel) {
+        button.dataset.originalLabel = button.textContent;
+      }
+      button.disabled = isLoading;
+      button.textContent = isLoading ? '处理中...' : button.dataset.originalLabel;
+    });
+  };
+
+  const optionalBoolean = value => (value === undefined || value === null || value === '' ? undefined : value);
+  const encodeSegment = segment => encodeURIComponent(segment.trim());
+
+  // 渲染统一的响应面板，包含元信息和正文
+  const renderResult = (resultId, payload) => {
+    if (!resultId) {
+      return;
+    }
+    const container = document.getElementById(resultId);
+    if (!container) {
+      return;
+    }
+    const urlEl = container.querySelector('[data-meta="url"]');
+    const statusEl = container.querySelector('[data-meta="status"]');
+    const durationEl = container.querySelector('[data-meta="duration"]');
+    const bodyEl = container.querySelector('[data-meta="body"]');
+
+    const resetMeta = () => {
+      if (urlEl) urlEl.textContent = '-';
+      if (statusEl) statusEl.textContent = '-';
+      if (durationEl) durationEl.textContent = '-';
+    };
+
+    container.classList.remove('error');
+    container.classList.remove('empty');
+
+    if (!payload) {
+      resetMeta();
+      container.classList.add('empty');
+      if (bodyEl) bodyEl.textContent = '尚未发起请求。';
+      return;
+    }
+
+    if (payload.errorMessage) {
+      resetMeta();
+      container.classList.add('error');
+      if (bodyEl) bodyEl.textContent = payload.errorMessage;
+      return;
+    }
+
+    resetMeta();
+
+    if (urlEl) {
+      urlEl.textContent = payload.url || '-';
+    }
+
+    if (statusEl) {
+      let statusValue = '-';
+      if (typeof payload.status === 'number') {
+        statusValue = String(payload.status);
+        if (payload.statusText) {
+          statusValue += ' ' + payload.statusText;
+        }
+      } else if (payload.statusText) {
+        statusValue = payload.statusText;
+      }
+      statusEl.textContent = statusValue;
+    }
+
+    const durationValue = typeof payload.duration === 'number'
+      ? payload.duration
+      : typeof payload.durationMs === 'number'
+        ? payload.durationMs
+        : null;
+    if (durationEl) {
+      durationEl.textContent = durationValue !== null ? `${durationValue.toFixed(1)} ms` : '-';
+    }
+
+    const contentType = (payload.contentType || '').toLowerCase();
+    let contentText = '';
+    let hasContent = true;
+    const normalizeBody = value => {
+      if (value === null || value === undefined) {
+        hasContent = false;
+        return '';
+      }
+      if (typeof value === 'string') {
+        if (value === '') {
+          hasContent = false;
+          return '';
+        }
+        return value;
+      }
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch (error) {
+        return String(value);
+      }
+    };
+
+    if (payload.body !== undefined) {
+      if (typeof payload.body === 'string' && contentType.includes('application/json')) {
+        try {
+          contentText = JSON.stringify(JSON.parse(payload.body), null, 2);
+        } catch {
+          contentText = payload.body;
+        }
+      } else {
+        contentText = normalizeBody(payload.body);
+      }
+    } else if (payload.data !== undefined) {
+      contentText = normalizeBody(payload.data);
+    } else if (payload.rawText) {
+      contentText = payload.rawText;
+    } else {
+      hasContent = false;
+    }
+
+    if (!hasContent) {
+      contentText = '(响应为空)';
+      container.classList.add('empty');
+    }
+
+    if (bodyEl) {
+      bodyEl.textContent = contentText;
+    }
+
+    if (!payload.ok) {
+      container.classList.add('error');
+    }
+  };
+
+  // 调用本地代理接口，将前端请求转发至 SeaTunnel
+  const seatunnelRequest = async options => {
+    ensureConfigReady();
+
+    if (options.formData) {
+      const proxyFormData = new FormData();
+      proxyFormData.append('__path', options.path || '');
+      proxyFormData.append('__method', options.method || 'POST');
+      proxyFormData.append('__query', JSON.stringify(options.query || {}));
+      proxyFormData.append('__headers', JSON.stringify(options.headers || {}));
+      options.formData.forEach((value, key) => {
+        proxyFormData.append(key, value);
+      });
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: proxyFormData
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || '上传请求代理失败。');
+      }
+      return result;
+    }
+
+    const filteredHeaders = {};
+    Object.entries(options.headers || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        return;
+      }
+      const text = String(value).trim();
+      if (text !== '') {
+        filteredHeaders[key] = text;
+      }
+    });
+
+    const payload = {
+      method: options.method || 'GET',
+      path: options.path || '',
+      query: options.query || {},
+      headers: filteredHeaders,
+      bodyEncoding: 'none'
+    };
+
+    if (options.rawBody !== undefined) {
+      payload.bodyEncoding = 'raw';
+      payload.body = options.rawBody;
+    } else if (options.body !== undefined) {
+      if (typeof options.body === 'string') {
+        payload.bodyEncoding = 'raw';
+        payload.body = options.body;
+      } else {
+        payload.bodyEncoding = 'json';
+        payload.body = JSON.stringify(options.body);
+      }
+    }
+
+    const response = await fetch('/api/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.error || '请求代理失败。');
+    }
+    return result;
+  };
+
+  // 绑定表单提交逻辑：生成请求配置并调用代理
+  const registerForm = (formId, handler) => {
+    const form = document.getElementById(formId);
+    if (!form) {
+      return;
+    }
+    const resultId = form.dataset.result;
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      try {
+        toggleLoading(form, true);
+        const config = await handler(form);
+        if (!config) {
+          renderResult(resultId, { errorMessage: '未生成请求配置。' });
+          return;
+        }
+        const response = await seatunnelRequest(config);
+        renderResult(resultId, response);
+      } catch (error) {
+        renderResult(resultId, { errorMessage: error.message });
+      } finally {
+        toggleLoading(form, false);
+      }
+    });
+  };
+
+  registerForm('overviewForm', () => {
+    const tagsRaw = document.getElementById('overviewTags').value.trim();
+    const extraRaw = document.getElementById('overviewExtra').value.trim();
+    const query = {};
+    const collectPairs = raw => {
+      raw.split('&').forEach(pair => {
+        if (!pair) {
+          return;
+        }
+        const [key, value] = pair.split('=');
+        if (key) {
+          query[key.trim()] = value !== undefined ? value.trim() : '';
+        }
+      });
+    };
+    if (tagsRaw) {
+      collectPairs(tagsRaw);
+    }
+    if (extraRaw) {
+      collectPairs(extraRaw);
+    }
+    return {
+      method: 'GET',
+      path: '/overview',
+      query
+    };
+  });
+
+  registerForm('runningJobsForm', () => ({
+    method: 'GET',
+    path: '/running-jobs'
+  }));
+
+  registerForm('jobInfoForm', () => {
+    const jobId = document.getElementById('jobInfoId').value.trim();
+    if (!jobId) {
+      throw new Error('请填写作业 ID。');
+    }
+    return {
+      method: 'GET',
+      path: '/job-info/' + encodeSegment(jobId)
+    };
+  });
+
+  registerForm('deprecatedJobForm', () => {
+    const jobId = document.getElementById('deprecatedJobId').value.trim();
+    if (!jobId) {
+      throw new Error('请填写作业 ID。');
+    }
+    return {
+      method: 'GET',
+      path: '/running-job/' + encodeSegment(jobId)
+    };
+  });
+
+  registerForm('finishedJobsForm', () => {
+    const stateValue = document.getElementById('finishedState').value;
+    return {
+      method: 'GET',
+      path: stateValue ? '/finished-jobs/' + encodeSegment(stateValue) : '/finished-jobs'
+    };
+  });
+
+  registerForm('systemInfoForm', () => ({
+    method: 'GET',
+    path: '/system-monitoring-information'
+  }));
+
+  registerForm('submitJobForm', () => {
+    const jobId = document.getElementById('submitJobId').value.trim();
+    const jobName = document.getElementById('submitJobName').value.trim();
+    const savepoint = document.getElementById('submitJobSavepoint').value;
+    const format = document.getElementById('submitJobFormat').value;
+    const configText = document.getElementById('submitJobConfig').value;
+
+    if (!configText.trim()) {
+      throw new Error('请填写配置内容。');
+    }
+
+    const query = {};
+    if (jobId) {
+      query.jobId = jobId;
+    }
+    if (jobName) {
+      query.jobName = jobName;
+    }
+    const savepointOpt = optionalBoolean(savepoint);
+    if (savepointOpt !== undefined) {
+      query.isStartWithSavePoint = savepointOpt;
+    }
+    query.format = format || 'json';
+
+    const headers = {};
+    let rawBody = configText;
+    if (format === 'json') {
+      parseJsonInput(configText);
+      headers['Content-Type'] = 'application/json;charset=UTF-8';
+    } else {
+      headers['Content-Type'] = 'text/plain;charset=UTF-8';
+    }
+
+    return {
+      method: 'POST',
+      path: '/submit-job',
+      query,
+      rawBody,
+      headers
+    };
+  });
+
+  registerForm('uploadJobForm', () => {
+    const fileInput = document.getElementById('uploadJobFile');
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      throw new Error('请选择要上传的配置文件。');
+    }
+    const jobId = document.getElementById('uploadJobId').value.trim();
+    const jobName = document.getElementById('uploadJobName').value.trim();
+    const savepoint = document.getElementById('uploadJobSavepoint').value;
+    const query = {};
+    if (jobId) {
+      query.jobId = jobId;
+    }
+    if (jobName) {
+      query.jobName = jobName;
+    }
+    const savepointOpt = optionalBoolean(savepoint);
+    if (savepointOpt !== undefined) {
+      query.isStartWithSavePoint = savepointOpt;
+    }
+    const formData = new FormData();
+    formData.append('config_file', file);
+    return {
+      method: 'POST',
+      path: '/submit-job/upload',
+      query,
+      formData
+    };
+  });
+
+  registerForm('batchSubmitForm', () => {
+    const payloadText = document.getElementById('batchSubmitPayload').value;
+    const payload = parseJsonInput(payloadText);
+    if (!Array.isArray(payload)) {
+      throw new Error('批量提交内容需为 JSON 数组。');
+    }
+    return {
+      method: 'POST',
+      path: '/submit-jobs',
+      body: payload,
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
+  });
+
+  registerForm('stopJobForm', () => {
+    const jobId = document.getElementById('stopJobId').value.trim();
+    if (!jobId) {
+      throw new Error('请填写作业 ID。');
+    }
+    const savepoint = document.getElementById('stopJobSavepoint').checked;
+    return {
+      method: 'POST',
+      path: '/stop-job',
+      body: {
+        jobId,
+        isStopWithSavePoint: Boolean(savepoint)
+      },
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
+  });
+
+  registerForm('batchStopForm', () => {
+    const payloadText = document.getElementById('batchStopPayload').value;
+    const payload = parseJsonInput(payloadText);
+    if (!Array.isArray(payload)) {
+      throw new Error('批量停止内容需为 JSON 数组。');
+    }
+    return {
+      method: 'POST',
+      path: '/stop-jobs',
+      body: payload,
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
+  });
+
+  registerForm('encryptForm', () => {
+    const payloadText = document.getElementById('encryptPayload').value;
+    const payload = parseJsonInput(payloadText);
+    return {
+      method: 'POST',
+      path: '/encrypt-config',
+      body: payload,
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
+  });
+
+  registerForm('updateTagsForm', () => {
+    const payloadText = document.getElementById('updateTagsPayload').value;
+    const payload = parseJsonInput(payloadText, true);
+    if (payload === null || Array.isArray(payload) || typeof payload !== 'object') {
+      throw new Error('请求体需为 JSON 对象。');
+    }
+    return {
+      method: 'POST',
+      path: '/update-tags',
+      body: payload,
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
+  });
+
+  registerForm('logsForm', () => {
+    const jobId = document.getElementById('logsJobId').value.trim();
+    const fileName = document.getElementById('logsFileName').value.trim();
+    const format = document.getElementById('logsFormat').value;
+    const query = {};
+    if (format) {
+      query.format = format;
+    }
+    let path = '/logs';
+    if (fileName) {
+      path += '/' + encodeSegment(fileName);
+    } else if (jobId) {
+      path += '/' + encodeSegment(jobId);
+    }
+    const headers = {};
+    if (format === 'json') {
+      headers.Accept = 'application/json';
+    }
+    return {
+      method: 'GET',
+      path,
+      query,
+      headers
+    };
+  });
+
+  registerForm('nodeLogForm', () => {
+    const pathValue = document.getElementById('nodeLogPath').value.trim();
+    let path = '/log';
+    if (pathValue) {
+      path += '/' + encodeSegment(pathValue);
+    }
+    return {
+      method: 'GET',
+      path,
+      headers: {
+        Accept: 'text/plain'
+      }
+    };
+  });
+
+  registerForm('metricsForm', () => {
+    const typeValue = document.getElementById('metricsType').value;
+    return {
+      method: 'GET',
+      path: '/' + typeValue
+    };
+  });
+
+  document.querySelectorAll('button[type="submit"]').forEach(button => {
+    if (!button.dataset.originalLabel) {
+      button.dataset.originalLabel = button.textContent;
+    }
+  });
+
+  selectors.baseForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const rawUrl = selectors.baseInput.value.trim();
+    const timeoutValue = selectors.timeoutInput.value.trim();
+    const timeoutNumber = Number(timeoutValue);
+
+    if (!rawUrl) {
+      updateBaseStatus('基础地址不能为空。', true);
+      return;
+    }
+    if (!Number.isFinite(timeoutNumber) || timeoutNumber < 0) {
+      updateBaseStatus('超时时间必须为非负数字。', true);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=UTF-8'
+        },
+        body: JSON.stringify({
+          baseUrl: rawUrl,
+          timeout: timeoutNumber
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || 'HTTP ' + response.status);
+      }
+      state.baseUrl = result.baseUrl || '';
+      state.timeout = Number(result.timeout) || 0;
+      syncFormWithState();
+      updateBaseStatus('基础配置已保存。');
+    } catch (error) {
+      updateBaseStatus('保存失败：' + error.message, true);
+    }
+  });
+
+  const loadConfig = async () => {
+    try {
+      const response = await fetch('/api/config', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      const data = await response.json();
+      state.baseUrl = data.baseUrl || '';
+      state.timeout = Number(data.timeout) || 0;
+      syncFormWithState();
+      updateBaseStatus(state.baseUrl ? '已加载保存的基础地址。' : '请填写基础地址并保存。');
+    } catch (error) {
+      updateBaseStatus('加载基础配置失败：' + error.message, true);
+    }
+  };
+
+  loadConfig();
+})();
+</script>
+
+</body>
+</html>
+
